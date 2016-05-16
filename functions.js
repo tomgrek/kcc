@@ -5,6 +5,7 @@ var readline = require('readline');
 var _ = require('underscore');
 var DDPClient = require('ddp');
 var login = require('ddp-login');
+var spawn = require('child_process').spawn;
 
 var ddpclient = new DDPClient({
   host : 'localhost',
@@ -82,8 +83,16 @@ var alert = function(message) {
 
 module.exports = {
 
+getConfig : function() {
+  var conf_file = fs.readFileSync(path.join(home, '.kaselab.conf')); //NB: hardcoded link BAD
+  return JSON.parse(conf_file);
+},
+writeConfig : function(config) {
+  fs.writeFileSync(path.join(home, '.kaselab.conf'), JSON.stringify(config));
+},
 cleanUpAndQuit : function() {
-  ddpclient.close();
+  if (userId != '')
+    ddpclient.close();
   process.exit(0);
 },
 userId : function() {
@@ -119,6 +128,15 @@ messageAlerts : function() {
       var fullMessage =  _.where(ddpclient.collections.messages, {_id:id})[0];
       alert("KaseLab: " + fullMessage.message + ' [' + fullMessage.localId + ']');
     };
+},
+stopMessageAlerts : function() {
+  messageWatcher.stop();
+},
+spawnBackgroundAlerts : function() {
+  return spawn('nodejs', ['spawner.js', 'background_alerts'], {
+    detached: true,
+    stdio: ['ignore',1,2]
+  });
 }
 
 };
