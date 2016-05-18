@@ -83,6 +83,13 @@ var alert = function(message) {
 
 module.exports = {
 
+errorAndQuit : function(error) {
+  console.log('Error '+error.error+': '+error.reason);
+  console.log(error.details);
+  if (userId != '')
+    ddpclient.close();
+  process.exit(0);
+},
 getConfig : function() {
   var conf_file = fs.readFileSync(path.join(home, '.kaselab.conf')); //NB: hardcoded link BAD
   return JSON.parse(conf_file);

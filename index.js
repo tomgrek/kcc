@@ -1,12 +1,36 @@
 var fs = require('fs');
+var input = require('readline-sync');
 
 var klFunctions = require('./functions');
 
+var useProjectAction = function(args) {
+  klFunctions.callMethod('checkProjectExists', [{name: args[0]}], function(err, res) {
+    if (err) {
+      klFunctions.errorAndQuit(err);
+    }
+    if (!res.result) {
+      klFunctions.errorAndQuit({error:400,reason:'No such project',details:res.message});
+    }
+    else {
+        console.log('ok');
+      }
+  });
+}
+
 var newProjectAction = function(args) {
   // args are: args[0] - projectName
-  klFunctions.callMethod('newProject', [{projectName: args[0]}], function(err, res) {
+  var theProject = {};
+  theProject.name = args[0]; theProject.inception = new Date();
+  theProject.contributors = [{role:'creator',userId:klFunctions.userId()}];
+  theProject.stakeholders = []; theProject.tasks = []; theProject.assets = []; theProject.incomes = [];
+  theProject.milestones = []; theProject.documents = [];
+  theProject.description = input.question('Project Description [A new project] : ', {defaultInput: 'A new project'});
+  klFunctions.callMethod('newProject', [{project: theProject}], function(err, res) {
+    if (err) {
+      klFunctions.errorAndQuit(err);
+    }
     if (res.result) {
-      console.log(res.message);
+      console.log('\n'+res.message);
       console.log("'kaselab use project "+args[0]+"' will switch you on to that project and might be your next command.");
       klFunctions.cleanUpAndQuit();
     }
@@ -59,6 +83,19 @@ switch(process.argv[2]) {
     console.log('kaselab start background_alerts :\tstart the background alerts process\n\t\t\t\t\t(notifies you of changes to a project you are subscribed to.)');
     console.log('kaselab stop background_alerts :\tstop the background alerts process.');
     klFunctions.cleanUpAndQuit();
+    break;
+  }
+  case 'use' : {
+    switch (process.argv[3]) {
+      case 'project' : {
+        klFunctions.connect(useProjectAction, [process.argv[4]]);
+        break;
+      }
+      default : {
+        throw 'Cannot use '+process.argv[3];
+        break;
+      }
+    }
     break;
   }
   case 'new' : {
