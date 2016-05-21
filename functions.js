@@ -30,7 +30,7 @@ var loginWithPassword = function(callback) {
   }, function(error, userInfo) {
     if (error) { console.log('Unable to log in - max retries exceeded'); process.exit(1); }
     userId = userInfo.id;
-    touch(path.join(home, '.kaselab.conf'), {force:true});
+    touch(path.join(home, '.kaselab.conf'));
     fs.writeFile(path.join(home,'.kaselab.conf'), JSON.stringify({userInfo:userInfo}), function(err)
       {
       if (err) { console.log('Unable to write config file at '+home+'/.kaselab.conf'); }
@@ -81,10 +81,21 @@ var alert = function(message) {
   rl.write('\u001b[7m\u001b\033[s\u001b[0;0H\u001b\033[K'+message+'\u001b[0m\u001b\033[u');
 };
 
+var onlineTest = function(onCallback, offCallback) {
+  setTimeout(function() { if (!online) { offCallback(); process.exit(1); } }, 100);
+  require('dns').resolve('kaselab.com', function(err) {
+    if (err) {
+       console.log("No connection");
+    } else {
+       { online = true; onCallback(); process.exit(0); }
+    }
+  });
+};
+
 module.exports = {
 
 errorAndQuit : function(error) {
-  console.log('Error '+error.error+': '+error.reason);
+  console.log('\nError '+error.error+': '+error.reason);
   console.log(error.details);
   if (userId != '')
     ddpclient.close();
