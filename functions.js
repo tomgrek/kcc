@@ -81,28 +81,44 @@ var alert = function(message) {
   rl.write('\u001b[7m\u001b\033[s\u001b[0;0H\u001b\033[K'+message+'\u001b[0m\u001b\033[u');
 };
 
+var online = false;
 var onlineTest = function(onCallback, offCallback) {
   setTimeout(function() { if (!online) { offCallback(); process.exit(1); } }, 100);
   require('dns').resolve('kaselab.com', function(err) {
     if (err) {
        console.log("No connection");
     } else {
-       { online = true; onCallback(); process.exit(0); }
+       { online = true; onCallback(); }
     }
   });
 };
 
 module.exports = {
 
+collections : function() {
+  return ddpclient.collections;
+},
+
+getProjectIdLocally : function(data) {
+  var theConfig = JSON.parse(fs.readFileSync(path.join(home, '.kaselab.conf')));
+  var theProject = _.where(theConfig.projectList, { 'name' : data.name})[0]
+  if (theProject) {
+    return {result: true, id: theProject.id, projectName: theProject.name, message: 'Switched to project '+theProject.name+'.'};
+  }
+  else {
+    return {result: false, message: 'No record of that project locally.\nkaselab sync will update your records, please use it first.'}
+  }
+},
+
 errorAndQuit : function(error) {
-  console.log('\nError '+error.error+': '+error.reason);
+  console.log('Error '+error.error+': '+error.reason);
   console.log(error.details);
   if (userId != '')
     ddpclient.close();
   process.exit(0);
 },
 getConfig : function() {
-  var conf_file = fs.readFileSync(path.join(home, '.kaselab.conf')); //NB: hardcoded link BAD
+  var conf_file = fs.readFileSync(path.join(home, '.kaselab.conf'));
   return JSON.parse(conf_file);
 },
 writeConfig : function(config) {

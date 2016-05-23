@@ -2,11 +2,13 @@ var fs = require('fs');
 var input = require('readline-sync');
 var moment = require('moment');
 var _ = require('underscore');
+var sprintf = require('sprintf-js').sprintf;
 
 var klFunctions = require('./functions');
 
 var useProjectAction = function(args) {
-  klFunctions.callMethod('checkProjectExists', [{name: args[0], userId: klFunctions.userId()}], function(err, res) {
+/*
+  klFunctions.callMethod('switchToProject', [{name: args[0]}], function(err, res) {
     if (err) {
       klFunctions.errorAndQuit(err);
     }
@@ -21,7 +23,7 @@ var useProjectAction = function(args) {
         console.log(res.message);
         klFunctions.cleanUpAndQuit();
       }
-  });
+  });*/
 }
 
 var newProjectAction = function(args) {
@@ -41,7 +43,26 @@ var newProjectAction = function(args) {
     });
 }
 
-//try {
+var syncAction = function(args) {
+  console.log('Syncing...');
+  klFunctions.subscribe('projects', [], function() {
+      var theConfig = klFunctions.getConfig();
+      var shorterList = [];
+      _.forEach(klFunctions.collections().projects, function(project) {
+        shorterList.push({id: project._id, name: project.name, fullName: project.fullName, description: project.description});
+      });
+      console.log(sprintf('Active Projects:\n%-25s %-30s\n%-25s %-30s',"Name","Description","-----","-----"));
+      _.forEach(shorterList, function(project) {
+        console.log(sprintf("%-25s %-30s",project.name,project.description));
+      });
+      theConfig.projectList = shorterList;
+      klFunctions.writeConfig(theConfig);
+      process.exit(0);
+    }
+  );
+}
+
+try {
 
 switch(process.argv[2]) {
   case 'start' : {
@@ -85,7 +106,7 @@ switch(process.argv[2]) {
           klFunctions.cleanUpAndQuit();
         }
         config.timer[config.timer.length-1].end = new Date();
-        //klFunctions.writeConfig(config);
+        klFunctions.writeConfig(config);
         var timeDifference = moment(config.timer[config.timer.length-1].end) - moment(config.timer[config.timer.length-1].start);
         timeDifference = moment.duration(timeDifference);
         timeDifference = timeDifference.hours() + ':' + timeDifference.minutes();
@@ -112,6 +133,10 @@ switch(process.argv[2]) {
     		}
     	}
   }
+  case 'sync' : {
+    klFunctions.connect(syncAction, []);
+    break;
+  }
   case 'help' : {
     console.log("KaseLab, communication focused project management.");
     console.log("Try:\tkaselab new project MyProject\n\tkaselab switch project MyProject\n\tkaselab start timer");
@@ -123,7 +148,18 @@ switch(process.argv[2]) {
   case 'use' : {
     switch (process.argv[3]) {
       case 'project' : {
-        klFunctions.connect(useProjectAction, [process.argv[4]]);
+        var checkLocal = klFunctions.getProjectIdLocally({name:process.argv[4]});
+        if (checkLocal.result) {
+          var theConfig = klFunctions.getConfig();
+          theConfig.activeProjectId = checkLocal.id;
+          theConfig.activeProjectName = checkLocal.projectName;
+          klFunctions.writeConfig(theConfig);
+          console.log(checkLocal.message);
+          klFunctions.cleanUpAndQuit();
+        } else {
+        //klFunctions.connect(useProjectAction, [process.argv[4]]);
+        klFunctions.errorAndQuit({error:400, reason: 'No record of that project', details: checkLocal.message});
+        }
         break;
       }
       default : {
@@ -155,14 +191,12 @@ switch(process.argv[2]) {
   }
 }
 
-/*} catch(error) {
+} catch(error) {
   console.log('Error processing that command.\nSpecifically: '+error+'\nYou could try just running ./kaselab with no arguments');
   klFunctions.cleanUpAndQuit();
-}*/
+}
 
 //setTimeout(function() { messageWatcher.stop(); process.exit(0); }, 45000);
 /*ddpclient.on('message', function (msg) {
   console.log("ddp message: " + msg);
 });*/
-
-//setTimeout(function() { ddpclient.close(); }, 5000);
