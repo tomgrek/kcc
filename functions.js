@@ -106,7 +106,7 @@ getProjectIdLocally : function(data) {
     return {result: true, id: theProject.id, projectName: theProject.name, message: 'Switched to project '+theProject.name+'.'};
   }
   else {
-    return {result: false, message: 'No record of that project locally.\nkaselab sync will update your records, please use it first.'}
+    return {result: false, message: 'No record of that project locally.\n"kaselab sync" will update your local records, please use it first.'}
   }
 },
 

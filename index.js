@@ -6,26 +6,6 @@ var sprintf = require('sprintf-js').sprintf;
 
 var klFunctions = require('./functions');
 
-var useProjectAction = function(args) {
-/*
-  klFunctions.callMethod('switchToProject', [{name: args[0]}], function(err, res) {
-    if (err) {
-      klFunctions.errorAndQuit(err);
-    }
-    if (!res.result) {
-      klFunctions.errorAndQuit({error:400,reason:'No such project',details:res.message});
-    }
-    else {
-        var theConfig = klFunctions.getConfig();
-        theConfig.activeProjectId = res.id;
-        theConfig.activeProjectName = res.projectName;
-        klFunctions.writeConfig(theConfig);
-        console.log(res.message);
-        klFunctions.cleanUpAndQuit();
-      }
-  });*/
-}
-
 var newProjectAction = function(args) {
   // args are: args[0] - projectName
   var theProject = {};
@@ -157,7 +137,6 @@ switch(process.argv[2]) {
           console.log(checkLocal.message);
           klFunctions.cleanUpAndQuit();
         } else {
-        //klFunctions.connect(useProjectAction, [process.argv[4]]);
         klFunctions.errorAndQuit({error:400, reason: 'No record of that project', details: checkLocal.message});
         }
         break;
